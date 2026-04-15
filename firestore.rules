@@ -1,0 +1,188 @@
+rules_version = '2';
+service cloud.firestore {
+    match / databases / { database } / documents {
+        // ===============================================================
+        // Assumed Data Model
+        // ===============================================================
+        //
+        // Collection: users
+        // Document ID: {userId}
+        // Fields:
+        //   - uid: string (required)
+        //   - email: string (required)
+        //   - displayName: string
+        //   - photoURL: string
+        //   - role: string (required, enum: ['resident', 'admin'])
+        //   - propertyId: string
+        //   - phoneNumber: string
+        //   - createdAt: timestamp
+        //
+        // Collection: maintenanceRequests
+        // Document ID: {requestId}
+        // Fields:
+        //   - id: string
+        //   - residentId: string (required)
+        //   - residentName: string
+        //   - propertyId: string
+        //   - category: string (required, enum: ['plumbing', 'electrical', 'security', 'cleaning', 'other'])
+        //   - description: string (required, size < 2000)
+        //   - status: string (required, enum: ['pending', 'in-progress', 'completed', 'cancelled'])
+        //   - priority: string (required, enum: ['low', 'medium', 'high', 'emergency'])
+        //   - createdAt: timestamp (required)
+        //   - updatedAt: timestamp
+        //   - adminNotes: string
+        //
+        // Collection: announcements
+        // Document ID: {announcementId}
+        // Fields:
+        //   - id: string
+        //   - title: string (required, size < 200)
+        //   - content: string (required, size < 5000)
+        //   - authorId: string (required)
+        //   - createdAt: timestamp (required)
+        //   - type: string (required, enum: ['general', 'emergency', 'event'])
+        //
+        // Collection: shortStayListings
+        // Document ID: {listingId}
+        // Fields:
+        //   - id: string
+        //   - ownerId: string (required)
+        //   - title: string (required, size < 200)
+        //   - description: string (required, size < 2000)
+        //   - pricePerNight: number (required, positive)
+        //   - propertyId: string (required)
+        //   - amenities: list (strings)
+        //   - images: list (strings)
+        //   - status: string (required, enum: ['active', 'inactive'])
+        //   - createdAt: timestamp (required)
+        //
+        // Collection: bookings
+        // Document ID: {bookingId}
+        // Fields:
+        //   - id: string
+        //   - listingId: string (required)
+        //   - guestId: string (required)
+        //   - guestName: string
+        //   - checkInDate: string (required, ISO format)
+        //   - checkOutDate: string (required, ISO format)
+        //   - totalPrice: number (required, positive)
+        //   - status: string (required, enum: ['pending', 'confirmed', 'cancelled', 'completed'])
+        //   - createdAt: timestamp (required)
+        //
+        // ===============================================================
+
+        // ===============================================================
+        // Helper Functions
+        // ===============================================================
+
+        function isAuthenticated() {
+            return request.auth != null;
+        }
+
+        function isOwner(userId) {
+            return isAuthenticated() && request.auth.uid == userId;
+        }
+
+        function isAdmin() {
+            return isAuthenticated() &&
+                (get(/databases/$(database) / documents / users / $(request.auth.uid)).data.role == 'admin' ||
+                    (request.auth.token.email == "imojokon2@gmail.com" && request.auth.token.email_verified == true));
+        }
+
+        function isValidUser(data) {
+            return data.keys().hasAll(['uid', 'email', 'role']) &&
+                data.uid is string &&
+                    data.email is string &&
+                        data.role in ['resident', 'admin'] &&
+                        (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+                            (!('phoneNumber' in data) || (data.phoneNumber is string && data.phoneNumber.size() < 20));
+        }
+
+        function isValidMaintenanceRequest(data) {
+            return data.keys().hasAll(['residentId', 'category', 'description', 'status', 'priority', 'createdAt']) &&
+                data.residentId is string &&
+                    data.category in ['plumbing', 'electrical', 'security', 'cleaning', 'other'] &&
+                    data.description is string && data.description.size() < 2000 &&
+                        data.status in ['pending', 'in-progress', 'completed', 'cancelled'] &&
+                        data.priority in ['low', 'medium', 'high', 'emergency'] &&
+                        data.createdAt is timestamp;
+        }
+
+        function isValidAnnouncement(data) {
+            return data.keys().hasAll(['title', 'content', 'authorId', 'createdAt', 'type']) &&
+                data.title is string && data.title.size() < 200 &&
+                    data.content is string && data.content.size() < 5000 &&
+                        data.authorId is string &&
+                            data.createdAt is timestamp &&
+                                data.type in ['general', 'emergency', 'event'];
+        }
+
+        function isValidShortStayListing(data) {
+            return data.keys().hasAll(['ownerId', 'title', 'description', 'pricePerNight', 'propertyId', 'status', 'createdAt']) &&
+                data.ownerId is string &&
+                    data.title is string && data.title.size() < 200 &&
+                        data.description is string && data.description.size() < 2000 &&
+                            data.pricePerNight is number && data.pricePerNight > 0 &&
+                                data.propertyId is string &&
+                                    data.status in ['active', 'inactive'] &&
+                                    data.createdAt is timestamp;
+        }
+
+        function isValidBooking(data) {
+            return data.keys().hasAll(['listingId', 'guestId', 'checkInDate', 'checkOutDate', 'totalPrice', 'status', 'createdAt']) &&
+                data.listingId is string &&
+                    data.guestId is string &&
+                        data.checkInDate is string &&
+                            data.checkOutDate is string &&
+                                data.totalPrice is number && data.totalPrice > 0 &&
+                                    data.status in ['pending', 'confirmed', 'cancelled', 'completed'] &&
+                                    data.createdAt is timestamp;
+        }
+
+        // ===============================================================
+        // Rules
+        // ===============================================================
+
+        match / users / { userId } {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) &&
+                (isOwner(userId) || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) &&
+                (isOwner(userId) || isAdmin()) &&
+                (isAdmin() || request.resource.data.role == resource.data.role); // Residents can't change their own role
+        }
+
+        match / maintenanceRequests / { requestId } {
+      allow read: if isAuthenticated() && (isOwner(resource.data.residentId) || isAdmin());
+      allow create: if isAuthenticated() && isValidMaintenanceRequest(request.resource.data) &&
+                request.resource.data.residentId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidMaintenanceRequest(request.resource.data) &&
+                (isAdmin() || (isOwner(resource.data.residentId) && request.resource.data.status == resource.data.status));
+      allow delete: if isAdmin();
+        }
+
+        match / announcements / { announcementId } {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() && isValidAnnouncement(request.resource.data);
+        }
+
+        match / shortStayListings / { listingId } {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidShortStayListing(request.resource.data) &&
+                request.resource.data.ownerId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidShortStayListing(request.resource.data) &&
+                (isOwner(resource.data.ownerId) || isAdmin());
+      allow delete: if isOwner(resource.data.ownerId) || isAdmin();
+        }
+
+        match / bookings / { bookingId } {
+      allow read: if isAuthenticated() && (isOwner(resource.data.guestId) || isAdmin() ||
+                isOwner(get(/databases/$(database) / documents / shortStayListings / $(resource.data.listingId)).data.ownerId));
+      allow create: if isAuthenticated() && isValidBooking(request.resource.data) &&
+                request.resource.data.guestId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidBooking(request.resource.data) &&
+                (isOwner(resource.data.guestId) || isAdmin() ||
+                    isOwner(get(/databases/$(database) / documents / shortStayListings / $(resource.data.listingId)).data.ownerId));
+        }
+    }
+}

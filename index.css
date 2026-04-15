@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+    --color-bg-main: #F4F6F8;
+    --color-sidebar: #0F172A;
+    --color-accent: #38BDF8;
+    --color-text-pri: #1E293B;
+    --color-text-sec: #64748B;
+    --color-border-theme: #E2E8F0;
+    --color-success-theme: #10B981;
+    --color-warning-theme: #F59E0B;
+}
+
+@layer base {
+    body {
+        @apply font-sans text-text-pri bg-bg-main;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-sans font-bold tracking-tight;
+    }
+}
+
+.panel-card {
+    @apply bg-white rounded-2xl border border-border-theme shadow-sm;
+}
+
+.status-pill {
+    @apply px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider;
+}
+
+.status-pending {
+    @apply bg-amber-100 text-amber-700;
+}
+
+.status-active {
+    @apply bg-emerald-100 text-emerald-700;
+}
+
+.status-emergency {
+    @apply bg-rose-100 text-rose-700;
+}
+
+.sidebar-nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-text-sec hover:bg-white/5 hover:text-white;
+}
+
+.sidebar-nav-item-active {
+    @apply bg-accent/10 text-accent font-semibold;
+}

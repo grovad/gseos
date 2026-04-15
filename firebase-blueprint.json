@@ -1,0 +1,328 @@
+{
+    "entities": {
+        "User": {
+            "title": "User",
+            "description": "A user of the GROVAD Smart Estate OS, either a resident or an admin.",
+            "type": "object",
+            "properties": {
+                "uid": {
+                    "type": "string",
+                    "description": "The unique Firebase Auth ID."
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "The user's email address."
+                },
+                "displayName": {
+                    "type": "string",
+                    "description": "The user's full name."
+                },
+                "photoURL": {
+                    "type": "string",
+                    "description": "The user's profile picture URL."
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "resident",
+                        "admin"
+                    ],
+                    "description": "The user's role in the system."
+                },
+                "propertyId": {
+                    "type": "string",
+                    "description": "The ID of the property/unit the resident lives in (optional for admins)."
+                },
+                "phoneNumber": {
+                    "type": "string",
+                    "description": "The user's contact number."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the user profile was created."
+                }
+            },
+            "required": [
+                "uid",
+                "email",
+                "role"
+            ]
+        },
+        "MaintenanceRequest": {
+            "title": "Maintenance Request",
+            "description": "A request submitted by a resident for maintenance work.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The unique request ID."
+                },
+                "residentId": {
+                    "type": "string",
+                    "description": "The UID of the resident who submitted the request."
+                },
+                "residentName": {
+                    "type": "string",
+                    "description": "The name of the resident."
+                },
+                "propertyId": {
+                    "type": "string",
+                    "description": "The property unit ID."
+                },
+                "category": {
+                    "type": "string",
+                    "enum": [
+                        "plumbing",
+                        "electrical",
+                        "security",
+                        "cleaning",
+                        "other"
+                    ],
+                    "description": "The category of the issue."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Detailed description of the problem."
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "in-progress",
+                        "completed",
+                        "cancelled"
+                    ],
+                    "description": "The current status of the request."
+                },
+                "priority": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high",
+                        "emergency"
+                    ],
+                    "description": "The priority level."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the request was submitted."
+                },
+                "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the request was last updated."
+                },
+                "adminNotes": {
+                    "type": "string",
+                    "description": "Notes added by the estate manager."
+                }
+            },
+            "required": [
+                "residentId",
+                "category",
+                "description",
+                "status",
+                "priority",
+                "createdAt"
+            ]
+        },
+        "Announcement": {
+            "title": "Announcement",
+            "description": "An estate-wide announcement from the management.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The unique announcement ID."
+                },
+                "title": {
+                    "type": "string",
+                    "description": "The title of the announcement."
+                },
+                "content": {
+                    "type": "string",
+                    "description": "The body of the announcement."
+                },
+                "authorId": {
+                    "type": "string",
+                    "description": "The UID of the admin who posted it."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the announcement was posted."
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "general",
+                        "emergency",
+                        "event"
+                    ],
+                    "description": "The type of announcement."
+                }
+            },
+            "required": [
+                "title",
+                "content",
+                "authorId",
+                "createdAt",
+                "type"
+            ]
+        },
+        "ShortStayListing": {
+            "title": "Short Stay Listing",
+            "description": "A property unit available for short-term rental.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The unique listing ID."
+                },
+                "ownerId": {
+                    "type": "string",
+                    "description": "The UID of the resident/owner."
+                },
+                "title": {
+                    "type": "string",
+                    "description": "The title of the listing."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Detailed description of the unit."
+                },
+                "pricePerNight": {
+                    "type": "number",
+                    "description": "The cost per night."
+                },
+                "propertyId": {
+                    "type": "string",
+                    "description": "The unit ID in the estate."
+                },
+                "amenities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of amenities (WiFi, Pool, etc.)."
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "URLs of listing images."
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "inactive"
+                    ],
+                    "description": "Whether the listing is currently available."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the listing was created."
+                }
+            },
+            "required": [
+                "ownerId",
+                "title",
+                "description",
+                "pricePerNight",
+                "propertyId",
+                "status",
+                "createdAt"
+            ]
+        },
+        "Booking": {
+            "title": "Booking",
+            "description": "A reservation for a short-stay listing.",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The unique booking ID."
+                },
+                "listingId": {
+                    "type": "string",
+                    "description": "The ID of the listing being booked."
+                },
+                "guestId": {
+                    "type": "string",
+                    "description": "The UID of the user making the booking."
+                },
+                "guestName": {
+                    "type": "string",
+                    "description": "The name of the guest."
+                },
+                "checkInDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "The check-in date."
+                },
+                "checkOutDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "The check-out date."
+                },
+                "totalPrice": {
+                    "type": "number",
+                    "description": "The total cost of the stay."
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "pending",
+                        "confirmed",
+                        "cancelled",
+                        "completed"
+                    ],
+                    "description": "The status of the booking."
+                },
+                "createdAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "When the booking was made."
+                }
+            },
+            "required": [
+                "listingId",
+                "guestId",
+                "checkInDate",
+                "checkOutDate",
+                "totalPrice",
+                "status",
+                "createdAt"
+            ]
+        }
+    },
+    "firestore": {
+        "/users/{userId}": {
+            "schema": "User",
+            "description": "User profiles."
+        },
+        "/maintenanceRequests/{requestId}": {
+            "schema": "MaintenanceRequest",
+            "description": "Maintenance requests submitted by residents."
+        },
+        "/announcements/{announcementId}": {
+            "schema": "Announcement",
+            "description": "Estate announcements."
+        },
+        "/shortStayListings/{listingId}": {
+            "schema": "ShortStayListing",
+            "description": "Short-term rental listings."
+        },
+        "/bookings/{bookingId}": {
+            "schema": "Booking",
+            "description": "Reservations for short-term stays."
+        }
+    }
+}
